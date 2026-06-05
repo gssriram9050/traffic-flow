@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Flow Predictor & Route Optimizer</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- 1. Left Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">TF</div>
+                <div class="brand-name">TRAFFIC FLOW</div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="live-network">
+                    <span class="nav-icon"><i class="fa-solid fa-circle-nodes"></i></span>
+                    <span class="nav-label">Live Network</span>
+                </button>
+                <button class="nav-item" data-tab="route-optimizer">
+                    <span class="nav-icon"><i class="fa-solid fa-route"></i></span>
+                    <span class="nav-label">Route Optimizer</span>
+                </button>
+                <button class="nav-item" data-tab="predictions">
+                    <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                    <span class="nav-label">Predictions</span>
+                </button>
+                <button class="nav-item" data-tab="incidents">
+                    <span class="nav-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                    <span class="nav-label">Incidents</span>
+                </button>
+                <button class="nav-item" data-tab="analytics">
+                    <span class="nav-icon"><i class="fa-solid fa-chart-simple"></i></span>
+                    <span class="nav-label">Analytics</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="sys-status">
+                    <span class="status-indicator"></span>
+                    <div class="status-text">
+                        <div class="status-title">SYSTEM ONLINE</div>
+                        <div class="status-location">COIMBATORE, TAMIL NADU</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 2. Main Content Workspace -->
+        <main class="app-main">
+            <!-- PAGE A: Live Network Tab -->
+            <section class="tab-pane active" id="tab-live-network">
+                <header class="tab-pane-header">
+                    <div class="pane-title-area">
+                        <span class="pane-category">LIVE NETWORK</span>
+                        <h2 class="pane-title">Live Network</h2>
+                    </div>
+                    <div class="pane-meta">REAL-TIME NETWORK MAP AND INCIDENT OVERLAY / COIMBATORE, TAMIL NADU</div>
+                </header>
+
+                <div class="pane-body">
+                    <!-- Banner Info Card & Quick Stats Row -->
+                    <div class="dashboard-banner-grid">
+                        <div class="banner-info-card">
+                            <span class="banner-tag">REAL-TIME TRAFFIC INTELLIGENCE</span>
+                            <h3 class="banner-heading">City traffic,<br>live on one control surface.</h3>
+                            <p class="banner-description">
+                                Monitor congestion, incidents, and route health across the network. This static build mirrors the original traffic dashboard with plain HTML, CSS, and JavaScript.
+                            </p>
+                        </div>
+                        <div class="quick-stats-container">
+                            <div class="stat-box">
+                                <span class="stat-value" id="stats-vehicles">14,160</span>
+                                <span class="stat-label">VEHICLES</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-value" id="stats-segments">19</span>
+                                <span class="stat-label">SEGMENTS</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-value" id="stats-incidents">4</span>
+                                <span class="stat-label">INCIDENTS</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-value" id="stats-time">10:03 pm</span>
+                                <span class="stat-label">LAST UPDATE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Two-Column Map and Telemetry Grid -->
+                    <div class="live-network-grid">
+                        <div class="map-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">LIVE NETWORK</span>
+                                    <h4 class="card-title">Congestion map</h4>
+                                </div>
+                                <button class="btn btn-small" id="map-refresh-btn"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                            </div>
+                            <div class="card-body map-wrapper">
+                                <div id="live-map" class="leaflet-map-container"></div>
+                                <div class="map-legend">
+                                    <span class="legend-dot green"></span> Free Flow
+                                    <span class="legend-dot orange"></span> Heavy
+                                    <span class="legend-dot red"></span> Gridlock
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="telemetry-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">TRAFFIC STATUS</span>
+                                    <h4 class="card-title">Segment telemetry</h4>
+                                </div>
+                            </div>
+                            <div class="card-body telemetry-list" id="telemetry-list-container">
+                                <!-- Dynamically generated telemetry cards -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE B: Route Optimizer Tab -->
+            <section class="tab-pane" id="tab-route-optimizer">
+                <header class="tab-pane-header">
+                    <div class="pane-title-area">
+                        <span class="pane-category">ROUTE OPTIMIZER</span>
+                        <h2 class="pane-title">Route Optimizer</h2>
+                    </div>
+                    <div class="pane-meta">COMPUTE OPTIMAL PATHS ACROSS THE COIMBATORE NETWORK / COIMBATORE, TAMIL NADU</div>
+                </header>
+
+                <div class="pane-body">
+                    <div class="route-optimizer-grid">
+                        <!-- Controls Card -->
+                        <div class="optimizer-controls-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">ROUTE OPTIMIZER</span>
+                                    <h4 class="card-title">Route parameters</h4>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form id="routing-parameters-form" onsubmit="event.preventDefault();">
+                                    <div class="form-row">
+                                        <div class="form-item">
+                                            <label for="opt-source">Source node</label>
+                                            <select id="opt-source" class="custom-select"></select>
+                                        </div>
+                                        <div class="form-item">
+                                            <label for="opt-target">Target node</label>
+                                            <select id="opt-target" class="custom-select"></select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-item">
+                                            <label for="opt-algo">Algorithm</label>
+                                            <select id="opt-algo" class="custom-select">
+                                                <option value="astar">A* heuristic</option>
+                                                <option value="dijkstra">Dijkstra</option>
+                                                <option value="osrm">OSRM API</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-item">
+                                            <label for="opt-optimize">Optimize for</label>
+                                            <select id="opt-optimize" class="custom-select">
+                                                <option value="time">Time</option>
+                                                <option value="distance">Distance</option>
+                                                <option value="fuel">Fuel</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-item-checkbox">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="opt-avoid-incidents" checked>
+                                            <span class="custom-checkbox"></span>
+                                            Avoid incidents
+                                        </label>
+                                    </div>
+
+                                    <button class="btn btn-green btn-large" id="btn-compute-route">Compute route</button>
+                                </form>
+                                <p class="form-disclaimer">
+                                    THE STATIC CLIENT ENGINE COMPUTES THE ROUTE WITH INCIDENT-AWARE EDGE WEIGHTS AND COMPARES PERFORMANCE.
+                                </p>
+
+                                <!-- Route output details -->
+                                <div id="opt-results-box" class="results-box hidden">
+                                    <h5 class="results-title"><i class="fa-solid fa-circle-info"></i> Computed Path Metrics</h5>
+                                    <div class="results-stats-row">
+                                        <div class="res-stat">
+                                            <span class="res-stat-label">DISTANCE</span>
+                                            <span class="res-stat-value" id="res-val-distance">-</span>
+                                        </div>
+                                        <div class="res-stat">
+                                            <span class="res-stat-label">DURATION</span>
+                                            <span class="res-stat-value" id="res-val-duration">-</span>
+                                        </div>
+                                        <div class="res-stat">
+                                            <span class="res-stat-label">CONGESTION</span>
+                                            <span class="res-stat-value" id="res-val-congestion">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="results-nodes-trail">
+                                        <div class="trail-title">Node Traversal:</div>
+                                        <div class="nodes-trail-flow" id="res-val-trail">
+                                            <!-- Trail badges -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Map Card -->
+                        <div class="optimizer-map-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">NETWORK VIEW</span>
+                                    <h4 class="card-title">Route overlay</h4>
+                                </div>
+                            </div>
+                            <div class="card-body map-wrapper">
+                                <div id="route-map" class="leaflet-map-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE C: Predictions Tab -->
+            <section class="tab-pane" id="tab-predictions">
+                <header class="tab-pane-header">
+                    <div class="pane-title-area">
+                        <span class="pane-category">PREDICTIONS</span>
+                        <h2 class="pane-title">Predictions</h2>
+                    </div>
+                    <div class="pane-meta">FORECAST SEGMENT CONGESTION OVER TIME / COIMBATORE, TAMIL NADU</div>
+                </header>
+
+                <div class="pane-body">
+                    <div class="predictions-grid">
+                        <!-- Inputs Card -->
+                        <div class="predictions-controls-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">PREDICTION ENGINE</span>
+                                    <h4 class="card-title">Congestion forecast</h4>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form id="prediction-form" onsubmit="event.preventDefault();">
+                                    <div class="form-item">
+                                        <label for="pred-road">Target road segment</label>
+                                        <select id="pred-road" class="custom-select"></select>
+                                    </div>
+                                    <div class="form-item slider-item">
+                                        <div class="slider-labels-row">
+                                            <label for="pred-time">Forecast horizon</label>
+                                            <span id="pred-time-label" class="slider-value-badge">12 hours</span>
+                                        </div>
+                                        <input type="range" id="pred-time" min="1" max="24" value="12" class="range-slider">
+                                        <div class="slider-ticks">
+                                            <span>1h</span>
+                                            <span>6h</span>
+                                            <span>12h</span>
+                                            <span>18h</span>
+                                            <span>24h</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-green btn-large" id="btn-run-forecast">Run forecast</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Outputs and Charts Card -->
+                        <div class="predictions-results-column">
+                            <div class="chart-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <span class="card-category">FORECAST OUTPUT</span>
+                                        <h4 class="card-title">Predicted traffic curve</h4>
+                                    </div>
+                                </div>
+                                <div class="card-body chart-wrapper">
+                                    <canvas id="pred-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="summary-stats-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <span class="card-category">MODEL STATS</span>
+                                        <h4 class="card-title">Forecast summary</h4>
+                                    </div>
+                                </div>
+                                <div class="card-body summary-stats-grid">
+                                    <div class="summary-stat-box">
+                                        <span class="summary-lbl">TARGET HORIZON</span>
+                                        <span class="summary-val val-green" id="pred-summary-horizon">+12 HOURS</span>
+                                    </div>
+                                    <div class="summary-stat-box">
+                                        <span class="summary-lbl">PREDICTED CONGESTION</span>
+                                        <span class="summary-val val-amber" id="pred-summary-congestion">10.0%</span>
+                                    </div>
+                                    <div class="summary-stat-box">
+                                        <span class="summary-lbl">PREDICTED SPEED</span>
+                                        <span class="summary-val val-green" id="pred-summary-speed">32 KM/H</span>
+                                    </div>
+                                    <div class="summary-stat-box">
+                                        <span class="summary-lbl">CONFIDENCE</span>
+                                        <span class="summary-val val-amber" id="pred-summary-confidence">76.7%</span>
+                                    </div>
+                                    <div class="summary-stat-box full-width">
+                                        <span class="summary-lbl">MODEL</span>
+                                        <span class="summary-val val-cyan" id="pred-summary-model">ENSEMBLE</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE D: Incidents Tab -->
+            <section class="tab-pane" id="tab-incidents">
+                <header class="tab-pane-header">
+                    <div class="pane-title-area">
+                        <span class="pane-category">INCIDENTS</span>
+                        <h2 class="pane-title">Incidents</h2>
+                    </div>
+                    <div class="pane-meta">REPORT AND MANAGE DYNAMIC TRAFFIC OBSTRUCTIONS / COIMBATORE, TAMIL NADU</div>
+                </header>
+
+                <div class="pane-body">
+                    <div class="incidents-grid">
+                        <!-- Report incident -->
+                        <div class="incidents-report-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">INCIDENT REPORTING</span>
+                                    <h4 class="card-title">Log new incident</h4>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form id="incident-report-form" onsubmit="event.preventDefault();">
+                                    <div class="form-item">
+                                        <label for="inc-road">Select road segment</label>
+                                        <select id="inc-road" class="custom-select"></select>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-item">
+                                            <label for="inc-type">Incident type</label>
+                                            <select id="inc-type" class="custom-select">
+                                                <option value="accident">Accident</option>
+                                                <option value="roadwork">Roadwork</option>
+                                                <option value="breakdown">Vehicle Breakdown</option>
+                                                <option value="weather">Weather Obstruction</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-item">
+                                            <label for="inc-severity">Severity</label>
+                                            <select id="inc-severity" class="custom-select">
+                                                <option value="minor">Minor</option>
+                                                <option value="moderate">Moderate</option>
+                                                <option value="severe" selected>Severe</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-item">
+                                        <label for="inc-desc">Description</label>
+                                        <input type="text" id="inc-desc" class="custom-input" placeholder="e.g. Water logging near Ukkadam Junction" required>
+                                    </div>
+                                    <button class="btn btn-amber btn-large" id="btn-report-incident">Report incident</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Active list -->
+                        <div class="incidents-list-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <span class="card-category">INCIDENT MATRIX</span>
+                                    <h4 class="card-title">Active road obstructions</h4>
+                                </div>
+                            </div>
+                            <div class="card-body incident-feed-list" id="incidents-feed-list-container">
+                                <!-- Dynamic incident feeds -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE E: Analytics Tab -->
+            <section class="tab-pane" id="tab-analytics">
+                <header class="tab-pane-header">
+                    <div class="pane-title-area">
+                        <span class="pane-category">ANALYTICS</span>
+                        <h2 class="pane-title">Analytics</h2>
+                    </div>
+                    <div class="pane-meta">PERFORMANCE BENCHMARKS AND ALGORITHM ANALYSIS / COIMBATORE, TAMIL NADU</div>
+                </header>
+
+                <div class="pane-body">
+                    <div class="analytics-grid">
+                        <div class="analytics-left-col">
+                            <div class="comparison-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <span class="card-category">ALGORITHM BENCHMARK</span>
+                                        <h4 class="card-title">Execution details</h4>
+                                    </div>
+                                </div>
+                                <div class="card-body table-wrapper">
+                                    <table class="analytics-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Algorithm</th>
+                                                <th>Solve Speed</th>
+                                                <th>Iterations</th>
+                                                <th>Heuristic Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>A* search</strong></td>
+                                                <td id="table-val-astar-speed">0.12 ms</td>
+                                                <td id="table-val-astar-iter">4</td>
+                                                <td>Haversine Distance</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Dijkstra</strong></td>
+                                                <td id="table-val-dijkstra-speed">0.45 ms</td>
+                                                <td id="table-val-dijkstra-iter">10</td>
+                                                <td>None (Uniform cost)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>OSRM API</strong></td>
+                                                <td id="table-val-osrm-speed">120 ms</td>
+                                                <td>N/A</td>
+                                                <td>HTTP Server Request</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="specs-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <span class="card-category">TECHNICAL SPECIFICATION</span>
+                                        <h4 class="card-title">Graph properties</h4>
+                                    </div>
+                                </div>
+                                <div class="card-body specs-content">
+                                    <div class="spec-row">
+                                        <span>Graph Structure:</span>
+                                        <strong>Adjacency List Object Hash Map</strong>
+                                    </div>
+                                    <div class="spec-row">
+                                        <span>Nodes Count:</span>
+                                        <strong>10 Vertices ($V$)</strong>
+                                    </div>
+                                    <div class="spec-row">
+                                        <span>Edges Count:</span>
+                                        <strong>19 Directed Links ($E$)</strong>
+                                    </div>
+                                    <div class="spec-row">
+                                        <span>Weight Attributes:</span>
+                                        <strong>Distance, Speed, Congestion Index</strong>
+                                    </div>
+                                    <div class="spec-row">
+                                        <span>Solvers:</span>
+                                        <strong>Dijkstra (O(V+E log V)) & A* Search</strong>
+                                    </div>
+                                    <div class="spec-row">
+                                        <span>R² Prediction Accuracy:</span>
+                                        <strong>~0.89 R² (Simulated Curve Fit)</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="analytics-right-col">
+                            <div class="comparison-chart-card">
+                                <div class="card-header">
+                                    <div class="card-title-group">
+                                        <span class="card-category">COMPARISON CHART</span>
+                                        <h4 class="card-title">Speed vs Iterations</h4>
+                                    </div>
+                                </div>
+                                <div class="card-body chart-wrapper">
+                                    <canvas id="analytics-radar-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
