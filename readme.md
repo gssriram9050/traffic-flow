@@ -105,7 +105,7 @@ Upload all four files to the root of your repository:
 3. Click **Save**
 
 Your site will be live at:  
-`https://<your-username>.github.io/traffic-routing-system/`
+`https://<your-username>.github.io/traffic-flow/`
 
 ---
 
